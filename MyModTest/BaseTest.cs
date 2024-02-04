@@ -2608,6 +2608,11 @@ namespace Handelabra.Sentinels.UnitTest
             this.RunCoroutine(this.GameController.DealDamageToTarget(new DamageSource(this.GameController, source), target, amount, type, isIrreducible, ignoreBattleZone: ignoreBattleZone, cardSource: new CardSource(this.GameController.FindCardController(source))));
         }
 
+        protected void DealDamage(TurnTaker source, Card target, int amount, DamageType type, bool isIrreducible = false, bool ignoreBattleZone = false)
+        {
+            this.RunCoroutine(this.GameController.DealDamageToTarget(new DamageSource(this.GameController, source), target, amount, type, isIrreducible, ignoreBattleZone: ignoreBattleZone, cardSource: new CardSource(this.GameController.FindCardController(target))));
+        }
+
         protected void DealDamage(Card source, TurnTakerController target, int amount, DamageType type, bool isIrreducible = false)
         {
             DealDamage(source, target.CharacterCard, amount, type);
@@ -3187,12 +3192,27 @@ namespace Handelabra.Sentinels.UnitTest
             Assert.IsTrue(card.HasGameText, card.Title + " should have game text.");
         }
 
+        protected bool IsHero(Card card, CardSource cardSource = null)
+        {
+            return GameController.AskCardControllersIfIsHero(card, cardSource);
+        }
+
+        protected bool IsHeroTarget(Card card, CardSource cardSource = null)
+        {
+            return GameController.AskCardControllersIfIsHeroTarget(card, cardSource);
+        }
+
+        protected bool IsVillain(Card card, CardSource cardSource = null)
+        {
+            return GameController.AskCardControllersIfIsVillain(card, cardSource);
+        }
+
         protected bool IsVillainTarget(Card card, CardSource cardSource = null)
         {
             return this.GameController.AskCardControllersIfIsVillainTarget(card, cardSource);
         }
 
-    protected void AssertCardHasKeyword(Card card, string keyword, bool isAdditional)
+        protected void AssertCardHasKeyword(Card card, string keyword, bool isAdditional)
         {
             Assert.IsTrue(this.GameController.DoesCardContainKeyword(card, keyword), "{0} should have keyword: {1}", card.Identifier, keyword);
             if (isAdditional)
@@ -4182,14 +4202,14 @@ namespace Handelabra.Sentinels.UnitTest
         protected GameControllerDecisionEvent AssertNoDecision(SelectionType selectionTypeThatShouldNotShowUp)
         {
             GameControllerDecisionEvent decider = decision =>
+            {
+                if (decision.SelectionType == selectionTypeThatShouldNotShowUp)
                 {
-                    if (decision.SelectionType == selectionTypeThatShouldNotShowUp)
-                    {
-                        Assert.Fail("No decision of selection type " + selectionTypeThatShouldNotShowUp + " was expected to be present, but there was a decision: " + decision.ToStringForMultiplayerDebugging());
-                    }
+                    Assert.Fail("No decision of selection type " + selectionTypeThatShouldNotShowUp + " was expected to be present, but there was a decision: " + decision.ToStringForMultiplayerDebugging());
+                }
 
-                    return this.MakeDecisions(decision);
-                };
+                return this.MakeDecisions(decision);
+            };
 
             ReplaceOnMakeDecisions(decider);
             return decider;
@@ -4513,12 +4533,12 @@ namespace Handelabra.Sentinels.UnitTest
                 RemoveAssertNextMessage(oldReceiver);
             }
             GameControllerMessageEvent receiver = (message) =>
-                {
-                    RunCoroutine(this.ReceiveMessage(message));
-                    Assert.IsTrue(message.Message.Contains(expectedMessage));
-                    _expectedMessageWasShown = true;
-                    return DoNothing();
-                };
+            {
+                RunCoroutine(this.ReceiveMessage(message));
+                Assert.IsTrue(message.Message.Contains(expectedMessage));
+                _expectedMessageWasShown = true;
+                return DoNothing();
+            };
 
             this.GameController.OnSendMessage += receiver;
             _expectedMessageWasShown = false;
@@ -4572,11 +4592,11 @@ namespace Handelabra.Sentinels.UnitTest
                 RemoveAssertNextMessage(oldReceiver);
             }
             GameControllerMessageEvent receiver = (message) =>
-                {
-                    RunCoroutine(this.ReceiveMessage(message));
-                    Assert.Fail("No message was expected, but there was one: '" + message.Message + "'");
-                    return DoNothing();
-                };
+            {
+                RunCoroutine(this.ReceiveMessage(message));
+                Assert.Fail("No message was expected, but there was one: '" + message.Message + "'");
+                return DoNothing();
+            };
 
             this.GameController.OnSendMessage += receiver;
             return receiver;
@@ -6014,4 +6034,3 @@ namespace Handelabra.Sentinels.UnitTest
         }
     }
 }
-
