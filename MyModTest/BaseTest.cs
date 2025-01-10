@@ -517,7 +517,10 @@ namespace Handelabra.Sentinels.UnitTest
                     decklistName = decklistName.Remove(index);
                     decklistName = decklistName.Replace(".DeckLists", "");
 
-                    modDecks.Add(decklistName);
+                    string identifier;
+                    ModHelper.GetNamespaceFromQualifiedIdentifier(decklistName, out identifier);
+
+                    modDecks.Add($"{assembly.Key}.{identifier}");
                 }
             }
 
